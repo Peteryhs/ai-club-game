@@ -2,71 +2,368 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Split Layout Webpage with Random Images</title>
+    <title>IRHS - AI Image Challenge</title>
     <style>
-        body, html {
+        /* CSS styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1f212a; /* Dark background */
+            color: #e0e0e0; /* Light text color */
             margin: 0;
             padding: 0;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
+            overflow: hidden; /* Prevent scroll */
         }
-        .main-container {
-            flex: 1;
+
+        /* Header */
+        #header {
             display: flex;
-            justify-content: center;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #1e2938; /* Updated color */
+            padding: 10px 20px;
+        }
+
+        #header-left {
+            display: flex;
             align-items: center;
         }
-        .split-div {
-            width: 80%;
-            height: 60%;
-            display: flex;
+
+        #header-left img {
+            height: 50px; /* Adjust as needed */
+            margin-right: 10px;
         }
-        .left-half, .right-half {
+
+        #header-left h1 {
+            margin: 0;
+            color: #e0e0e0;
+            font-weight: normal;
+            font-size: 24px;
+        }
+
+        #streak-counter {
+            font-size: 18px;
+            color: #e0e0e0;
+        }
+
+        /* Game container */
+        #game-container {
+            display: flex;
+            height: calc(100vh - 80px); /* Adjusted to account for header height */
+            margin: 0;
+        }
+
+        .guess-button {
             flex: 1;
             display: flex;
-            justify-content: center;
             align-items: center;
-            overflow: hidden;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            padding: 0; /* Remove padding */
+            margin: 0; /* Remove margin */
         }
-        .left-half img, .right-half img {
+
+        #ai-button {
+            background-color: #45a998; /* Primary color */
+        }
+
+        #ai-button:hover {
+            background-color: #397ec0; /* Secondary color */
+        }
+
+        #human-button {
+            background-color: #397ec0; /* Secondary color */
+        }
+
+        #human-button:hover {
+            background-color: #45a998; /* Primary color */
+        }
+
+        #image-container {
+            flex: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 0; /* Remove padding */
+            margin: 0; /* Remove margin */
+        }
+
+        #image-container img {
             max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
+            max-height: calc(100% - 40px); /* Adjusted to leave space for skip button */
+            border: 5px solid #fff;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            display: block;
         }
-        .bottom-div {
-            height: 20%;
-            background-color: #d0d0d0;
+
+        /* Skip button */
+        #skip-button {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: #e74c3c; /* Red color for skip */
+            color: #fff;
+            border: none;
+            padding: 10px 0;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 0; /* Remove margin */
+        }
+
+        #skip-button:hover {
+            background-color: #c0392b; /* Darker red on hover */
+        }
+
+        /* Full-screen overlay for result */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(31, 33, 42, 0.95);
+            color: #fff;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s;
+            z-index: 1000;
+            text-align: center;
+        }
+
+        #overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #overlay h2 {
+            font-size: 48px;
+            margin: 20px 0;
+        }
+
+        #overlay p {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+
+        #next-button {
+            padding: 15px 30px;
+            font-size: 18px;
+            margin-top: 20px;
+            background-color: #45a998; /* Primary color */
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #next-button:hover {
+            background-color: #397ec0; /* Secondary color */
+        }
+
+        /* Hide scrollbar on touch devices */
+        ::-webkit-scrollbar {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <div class="split-div">
-            <div class="left-half">
-                <img id="aiImage" alt="AI generated image">
-            </div>
-            <div class="right-half">
-                <img id="humanImage" alt="Human generated image">
-            </div>
+
+    <!-- Header -->
+    <div id="header">
+        <div id="header-left">
+            <!-- Placeholder for the image -->
+            <img src="image__1_-removebg-preview.png" alt="Logo">
+            <h1>IRHS - AI Image Challenge</h1>
+        </div>
+        <div id="streak-counter">
+            Current Streak: <span id="current-streak">0</span> | Highest Streak: <span id="highest-streak">0</span>
         </div>
     </div>
-    <div class="bottom-div">AI vs Human Images</div>
+
+    <!-- Game container -->
+    <div id="game-container">
+        <div class="guess-button" id="ai-button">AI Generated</div>
+        <div id="image-container">
+            <img id="main-image" src="" alt="Guess the origin">
+            <!-- Skip button -->
+            <button id="skip-button">Skip</button>
+        </div>
+        <div class="guess-button" id="human-button">Human Made</div>
+    </div>
+
+    <!-- Full-screen overlay for result -->
+    <div id="overlay" onclick="dismissOverlay()">
+        <h2 id="result-title"></h2>
+        <p id="result-message"></p>
+        <button id="next-button">Next Image</button>
+    </div>
 
     <script>
-        function getRandomImage(type) {
-            const randomNum = Math.floor(Math.random() * 5) + 1;
-            return `Pics/Image${randomNum}${type}.jpg`;
+        // JavaScript code
+
+        // Arrays of image filenames in the AI and Human folders
+        var aiImages = [
+            'Screenshot 2024-09-23 165840.png',
+            'Screenshot 2024-09-23 165819.png',
+            'image_fx_ (1).jpg',
+            'image_fx_.jpg',
+            'rpe8wpwe5bz4j7epafsi.png'
+            // Add all your AI image filenames here
+        ];
+
+        var humanImages = [
+            'Screenshot 2024-09-23 165909.png',
+            'majestic-mountain-peaks-stockcake.jpg',
+            'Bald-eagle-1_Web-1-1280x640.jpg',
+            'photo-vintage-film-camera-wooden-desk-soft-window-light_611870-29497.jpg',
+            'boy-his-dog-silhouetted-park-sunset_864588-15986.avif'
+            // Add all your Human image filenames here
+        ];
+
+        var currentImage = null; // To store current image info
+
+        // Variables for streak tracking
+        var currentStreak = 0;
+        var highestStreak = 0;
+
+        // Function to select a random image from an array
+        function getRandomImage(imagesArray) {
+            var index = Math.floor(Math.random() * imagesArray.length);
+            return imagesArray[index];
         }
 
-        document.addEventListener('DOMContentLoaded', (event) => {
-            document.getElementById('aiImage').src = getRandomImage('AI');
-            document.getElementById('humanImage').src = getRandomImage('Hu');
+        // Function to load a new image
+        function loadNewImage() {
+            // Hide overlay
+            var overlay = document.getElementById('overlay');
+            overlay.classList.remove('show');
+
+            // Reset buttons
+            document.getElementById('ai-button').style.pointerEvents = 'auto';
+            document.getElementById('human-button').style.pointerEvents = 'auto';
+            document.getElementById('skip-button').style.pointerEvents = 'auto';
+
+            // Randomly decide whether to show an AI or Human image
+            var isAI = Math.random() < 0.5; // 50% chance
+
+            var imageObj;
+
+            if (isAI) {
+                var aiImage = getRandomImage(aiImages);
+                imageObj = {
+                    src: 'AI/' + aiImage,
+                    label: 'AI Generated'
+                };
+            } else {
+                var humanImage = getRandomImage(humanImages);
+                imageObj = {
+                    src: 'Human/' + humanImage,
+                    label: 'Human Made'
+                };
+            }
+
+            currentImage = imageObj;
+
+            // Set the image source
+            var mainImage = document.getElementById('main-image');
+            mainImage.src = imageObj.src;
+        }
+
+        // Function to update streak display
+        function updateStreakDisplay() {
+            document.getElementById('current-streak').innerText = currentStreak;
+            document.getElementById('highest-streak').innerText = highestStreak;
+        }
+
+        // Function to handle user's guess
+        function handleGuess(userGuess) {
+            // Disable buttons
+            document.getElementById('ai-button').style.pointerEvents = 'none';
+            document.getElementById('human-button').style.pointerEvents = 'none';
+            document.getElementById('skip-button').style.pointerEvents = 'none';
+
+            // Check if user's guess is correct
+            var correct = (userGuess === currentImage.label);
+
+            // Display result in overlay
+            var overlay = document.getElementById('overlay');
+            var resultTitle = document.getElementById('result-title');
+            var resultMessage = document.getElementById('result-message');
+
+            if (correct) {
+                resultTitle.innerText = 'Correct!';
+                resultTitle.style.color = '#45a998'; // Primary color
+                resultMessage.innerText = 'This image is ' + currentImage.label + '.';
+
+                // Update streak
+                currentStreak++;
+                if (currentStreak > highestStreak) {
+                    highestStreak = currentStreak;
+                }
+            } else {
+                resultTitle.innerText = 'Incorrect';
+                resultTitle.style.color = '#e74c3c'; // Red color for incorrect
+                resultMessage.innerText = 'This image is actually ' + currentImage.label + '.';
+
+                // Reset current streak
+                currentStreak = 0;
+            }
+
+            // Update streak display
+            updateStreakDisplay();
+
+            overlay.classList.add('show');
+        }
+
+        // Function to handle skip
+        function handleSkip() {
+            // Reset current streak on skip
+            currentStreak = 0;
+            updateStreakDisplay();
+
+            // Load new image
+            loadNewImage();
+        }
+
+        // Function to dismiss overlay
+        function dismissOverlay() {
+            var overlay = document.getElementById('overlay');
+            overlay.classList.remove('show');
+        }
+
+        // Event listeners for buttons
+        document.getElementById('ai-button').addEventListener('click', function() {
+            handleGuess('AI Generated');
         });
+
+        document.getElementById('human-button').addEventListener('click', function() {
+            handleGuess('Human Made');
+        });
+
+        document.getElementById('skip-button').addEventListener('click', function(event) {
+            event.stopPropagation(); // Prevent event bubbling
+            handleSkip();
+        });
+
+        document.getElementById('next-button').addEventListener('click', function(event) {
+            event.stopPropagation(); // Prevent overlay dismissal
+            loadNewImage();
+        });
+
+        // Load the first image when the page loads
+        window.onload = function() {
+            loadNewImage();
+            updateStreakDisplay();
+        };
     </script>
+
 </body>
 </html>
